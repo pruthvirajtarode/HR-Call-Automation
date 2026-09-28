@@ -27,17 +27,25 @@ export async function appendToGoogleSheet(params: SyncCandidateToSheetParams): P
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    // Map extracted data to sheet columns based on expected order
-    // Order: serial_number, source, date, job_code, candidate_name, contact_number, email, 
-    // current_organization, present_designation, total_experience, relevant_experience, 
-    // current_location, preferred_location, notice_period, last_working_day, qualification, 
-    // year_of_passing, date_of_birth, reason_for_job_change, linkedin, offers_in_hand, 
-    // permanent_or_pf, communication, current_ctc, expected_ctc
+    // Auto-calculate the next Serial Number
+    const existingData = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A:A`,
+    });
+    
+    // Total rows minus the header row gives the next serial number
+    const rows = existingData.data.values;
+    const nextSerialNumber = rows && rows.length > 0 ? rows.length : 1;
 
+    // Auto-fill Date and Source
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const source = "AI Call Automation";
+
+    // Map extracted data to sheet columns based on expected order
     const row = [
-      params.candidateData.serial_number ?? "",
-      params.candidateData.source ?? "",
-      params.candidateData.date ?? "",
+      params.candidateData.serial_number ?? nextSerialNumber.toString(),
+      params.candidateData.source ?? source,
+      params.candidateData.date ?? today,
       params.candidateData.job_code ?? "",
       params.candidateData.candidate_name ?? "",
       params.candidateData.contact_number ?? "",

@@ -53,6 +53,7 @@ export async function extractCandidateData(transcript: string) {
     await new Promise(resolve => setTimeout(resolve, 1500));
     return {
       candidate_name: { value: "Priya Sharma", confidence: 0.99, source_text: "My name is Priya Sharma", status: "extracted" },
+      job_code: { value: "702", confidence: 0.99, source_text: "job code 7 0 2", status: "extracted" },
       contact_number: { value: "9876512345", confidence: 0.99, source_text: "my contact number is 9 8 7 6 5, 1 2 3 4 5", status: "extracted" },
       email: { value: "priya.sharma@outlook.com", confidence: 0.99, source_text: "My email ID is priya dot sharma at outlook dot com", status: "extracted" },
       current_organization: { value: "Global Solutions", confidence: 0.95, source_text: "working at Global Solutions", status: "extracted" },
