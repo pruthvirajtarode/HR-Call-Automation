@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Candidate {
+  id                  String               @id @default(uuid())
+  serialNumber        String?
+  source              String?
+  date                DateTime?            @default(now())
+  jobCode             String?
+  candidateName       String?
+  contactNumber       String?
+  email               String?              @unique
+  currentOrganization String?
+  presentDesignation  String?
+  totalExperience     String?
+  relevantExperience  String?
+  currentLocation     String?
+  preferredLocation   String?
+  noticePeriod        String?
+  lastWorkingDay      String?
+  qualification       String?
+  yearOfPassing       String?
+  dateOfBirth         String?
+  reasonForJobChange  String?
+  linkedin            String?
+  offersInHand        String?
+  permanentOrPf       String?
+  communication       String?
+  currentCtc          String?
+  expectedCtc         String?
+  
+  calls               CandidateCall[]
+  extractions         CandidateExtraction[]
+  trackerSyncs        TrackerSync[]
+  
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model CandidateCall {
+  id              String       @id @default(uuid())
+  candidateId     String?
+  candidate       Candidate?   @relation(fields: [candidateId], references: [id])
+  
+  audioFileName   String
+  audioFilePath   String       // Could be local path or S3 key
+  audioDuration   Int?         // In seconds
+  fileSize        Int?         // In bytes
+  mimeType        String?
+  
+  status          String       @default("UPLOADED") // UPLOADED, TRANSCRIBING, TRANSCRIBED, EXTRACTING, EXTRACTED, REVIEW_REQUIRED, APPROVED, FAILED
+  errorMessage    String?
+  
+  transcript      Transcript?
+  extraction      CandidateExtraction?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model Transcript {
+  id              String        @id @default(uuid())
+  callId          String        @unique
+  call            CandidateCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  
+  content         String        // Full text of transcript
+  metadata        String?       // JSON string of speaker diarization, timestamps
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model CandidateExtraction {
+  id              String        @id @default(uuid())
+  callId          String        @unique
+  call            CandidateCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  candidateId     String?
+  candidate       Candidate?    @relation(fields: [candidateId], references: [id])
+  
+  // Stored as JSON string to accommodate field-level metadata (value, confidence, source, status)
+  extractedData   String        
+  
+  status          String        @default("PENDING") // PENDING, REVIEWED, APPROVED
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model TrackerSync {
+  id              String        @id @default(uuid())
+  candidateId     String
+  candidate       Candidate     @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  
+  status          String        @default("PENDING") // PENDING, SUCCESS, FAILED
+  sheetRowNumber  Int?
+  errorMessage    String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model JobRequirement {
+  id              String        @id @default(uuid())
+  jobCode         String        @unique
+  title           String
+  description     String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
