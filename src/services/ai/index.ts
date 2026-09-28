@@ -12,19 +12,7 @@ export async function transcribeAudio(filePath: string, mimeType: string = "audi
     console.warn("No GEMINI_API_KEY provided. Using mock transcription.");
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 2000));
-    return `HR: Hello, can you hear me?
-Candidate: Yes, I can hear you clearly.
-HR: Great. Can you tell me about your current organization and role?
-Candidate: I am currently working at ABC Technologies as a Senior Android Developer.
-HR: How much experience do you have?
-Candidate: I have around 5 years of total experience, and 4 years of relevant experience in Android.
-HR: What's your current location and preferred location?
-Candidate: I'm based in Bengaluru, and I prefer to stay in Bengaluru.
-HR: What is your current CTC and expected CTC?
-Candidate: My current CTC is 10 LPA and I am expecting around 14 LPA.
-HR: And what is your notice period?
-Candidate: I have a 30 days notice period.
-HR: Thank you, we will get back to you.`;
+    return `Candidate: Good morning! My name is Priya Sharma. I am calling regarding the product manager position, job code 702. My email ID is priya.sharma@outlook.com, and my contact number is 9876512345. I am currently working at Global Solutions as a Senior Product Manager. I have 8 years of total experience, and 5 years of relevant experience in product management. Currently, I am located in Pune, but my preferred location is Mumbai. My notice period is 60 days, however, my last working day is already decided as October 31st. Regarding my education, I have a Master of Business Administration, year of passing 2017. My date of birth is August 15th, 1994. My reason for job change is that I am looking for a leadership role in a fast-paced environment. You can find me on LinkedIn under Priya Sharma PM. I currently have 2 offers in hand. I am a permanent employee with PF benefits. My current CTC is 25 LPA, and my expected CTC is 32 LPA. Thank you for your time!`;
   }
 
   try {
@@ -64,18 +52,27 @@ export async function extractCandidateData(transcript: string) {
     console.warn("No GEMINI_API_KEY provided. Using mock extraction.");
     await new Promise(resolve => setTimeout(resolve, 1500));
     return {
-      candidate_name: { value: "Unknown", confidence: 0, source_text: null, status: "missing" },
-      contact_number: { value: null, confidence: 0, source_text: null, status: "missing" },
-      email: { value: null, confidence: 0, source_text: null, status: "missing" },
-      current_organization: { value: "ABC Technologies", confidence: 0.95, source_text: "I am currently working at ABC Technologies", status: "extracted" },
-      present_designation: { value: "Senior Android Developer", confidence: 0.95, source_text: "as a Senior Android Developer", status: "extracted" },
-      total_experience: { value: "5 Years", confidence: 0.9, source_text: "I have around 5 years of total experience", status: "extracted" },
-      relevant_experience: { value: "4 Years", confidence: 0.9, source_text: "4 years of relevant experience in Android", status: "extracted" },
-      current_location: { value: "Bengaluru", confidence: 0.95, source_text: "I'm based in Bengaluru", status: "extracted" },
-      preferred_location: { value: "Bengaluru", confidence: 0.95, source_text: "prefer to stay in Bengaluru", status: "extracted" },
-      notice_period: { value: "30 Days", confidence: 0.9, source_text: "I have a 30 days notice period", status: "extracted" },
-      current_ctc: { value: "10 LPA", confidence: 0.95, source_text: "My current CTC is 10 LPA", status: "extracted" },
-      expected_ctc: { value: "14 LPA", confidence: 0.9, source_text: "expecting around 14 LPA", status: "extracted" }
+      candidate_name: { value: "Priya Sharma", confidence: 0.99, source_text: "My name is Priya Sharma", status: "extracted" },
+      contact_number: { value: "9876512345", confidence: 0.99, source_text: "my contact number is 9 8 7 6 5, 1 2 3 4 5", status: "extracted" },
+      email: { value: "priya.sharma@outlook.com", confidence: 0.99, source_text: "My email ID is priya dot sharma at outlook dot com", status: "extracted" },
+      current_organization: { value: "Global Solutions", confidence: 0.95, source_text: "working at Global Solutions", status: "extracted" },
+      present_designation: { value: "Senior Product Manager", confidence: 0.95, source_text: "as a Senior Product Manager", status: "extracted" },
+      total_experience: { value: "8 Years", confidence: 0.9, source_text: "8 years of total experience", status: "extracted" },
+      relevant_experience: { value: "5 Years", confidence: 0.9, source_text: "5 years of relevant experience", status: "extracted" },
+      current_location: { value: "Pune", confidence: 0.95, source_text: "I am located in Pune", status: "extracted" },
+      preferred_location: { value: "Mumbai", confidence: 0.95, source_text: "preferred location is Mumbai", status: "extracted" },
+      notice_period: { value: "60 Days", confidence: 0.9, source_text: "My notice period is 60 days", status: "extracted" },
+      last_working_day: { value: "October 31st", confidence: 0.9, source_text: "last working day is already decided as October 31st", status: "extracted" },
+      qualification: { value: "Master of Business Administration", confidence: 0.9, source_text: "Master of Business Administration", status: "extracted" },
+      year_of_passing: { value: "2017", confidence: 0.9, source_text: "year of passing 2 0 1 7", status: "extracted" },
+      date_of_birth: { value: "August 15th, 1994", confidence: 0.9, source_text: "date of birth is August 15th, 1994", status: "extracted" },
+      reason_for_job_change: { value: "Looking for a leadership role", confidence: 0.9, source_text: "looking for a leadership role in a fast-paced environment", status: "extracted" },
+      linkedin: { value: "Priya Sharma PM", confidence: 0.9, source_text: "LinkedIn under Priya Sharma PM", status: "extracted" },
+      offers_in_hand: { value: "2", confidence: 0.9, source_text: "2 offers in hand", status: "extracted" },
+      permanent_or_pf: { value: "Yes", confidence: 0.9, source_text: "permanent employee with PF benefits", status: "extracted" },
+      communication: { value: "Excellent", confidence: 0.9, source_text: "Good morning! My name is Priya Sharma", status: "extracted" },
+      current_ctc: { value: "25 LPA", confidence: 0.95, source_text: "My current C T C is 25 LPA", status: "extracted" },
+      expected_ctc: { value: "32 LPA", confidence: 0.9, source_text: "expected C T C is 32 LPA", status: "extracted" }
     };
   }
 

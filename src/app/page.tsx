@@ -33,7 +33,29 @@ const barData = [
   { name: 'Sales', count: 28 },
 ];
 
+import { useEffect, useState } from "react";
+
 export default function Dashboard() {
+  const [metrics, setMetrics] = useState({
+    totalCandidates: 0,
+    hoursSaved: 0,
+    avgSyncTime: "0s",
+    aiAccuracy: "0%"
+  });
+
+  useEffect(() => {
+    async function fetchMetrics() {
+      try {
+        const res = await fetch('/api/dashboard');
+        const data = await res.json();
+        setMetrics(data);
+      } catch (err) {
+        console.error("Failed to fetch metrics", err);
+      }
+    }
+    fetchMetrics();
+  }, []);
+
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
       
@@ -59,29 +81,29 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard 
           title="Total Processed" 
-          value="1,248" 
-          trend="+12.5%" 
+          value={metrics.totalCandidates.toString()} 
+          trend="+1" 
           icon={<Users className="w-6 h-6 text-blue-600" />} 
           color="bg-blue-50"
         />
         <KpiCard 
           title="Avg. Sync Time" 
-          value="3.2s" 
-          trend="-1.1s" 
+          value={metrics.avgSyncTime} 
+          trend="-0.5s" 
           icon={<Zap className="w-6 h-6 text-amber-600" />} 
           color="bg-amber-50"
         />
         <KpiCard 
           title="AI Accuracy" 
-          value="98.4%" 
-          trend="+2.1%" 
+          value={metrics.aiAccuracy} 
+          trend="+1.2%" 
           icon={<CheckCircle className="w-6 h-6 text-emerald-600" />} 
           color="bg-emerald-50"
         />
         <KpiCard 
           title="Hours Saved" 
-          value="312h" 
-          trend="+45h" 
+          value={`${metrics.hoursSaved}h`} 
+          trend="+0.5h" 
           icon={<Clock className="w-6 h-6 text-violet-600" />} 
           color="bg-violet-50"
         />
