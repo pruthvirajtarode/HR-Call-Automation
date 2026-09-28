@@ -6,9 +6,9 @@ import { CandidateExtractionSchema } from "@/types/candidate";
 
 type FlattenedData = Record<string, any>;
 
-export function ExtractionReview({ callId, onSyncSuccess }: { callId: string, onSyncSuccess: () => void }) {
-  const [data, setData] = useState<FlattenedData | null>(null);
-  const [loading, setLoading] = useState(true);
+export function ExtractionReview({ callId, onSyncSuccess, initialData }: { callId: string, onSyncSuccess: () => void, initialData?: any }) {
+  const [data, setData] = useState<FlattenedData | null>(initialData ? JSON.parse(initialData.extractedData) : null);
+  const [loading, setLoading] = useState(!initialData);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,10 +27,10 @@ export function ExtractionReview({ callId, onSyncSuccess }: { callId: string, on
         setLoading(false);
       }
     }
-    if (callId) {
+    if (callId && !initialData) {
       fetchCall();
     }
-  }, [callId]);
+  }, [callId, initialData]);
 
   const handleChange = (key: string, newValue: string) => {
     if (!data) return;

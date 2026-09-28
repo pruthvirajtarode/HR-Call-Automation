@@ -18,10 +18,14 @@ const steps = [
 export default function CallAutomationPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [callId, setCallId] = useState<string | null>(null);
+  const [transcriptData, setTranscriptData] = useState<any>(null);
+  const [extractionData, setExtractionData] = useState<any>(null);
   const [status, setStatus] = useState<CandidateProcessingStatus>("UPLOAD_PENDING");
 
-  const handleUploadSuccess = (newCallId: string) => {
+  const handleUploadSuccess = (newCallId: string, transcript?: any, extraction?: any) => {
     setCallId(newCallId);
+    if (transcript) setTranscriptData(transcript);
+    if (extraction) setExtractionData(extraction);
     // Since our MVP API processes it all synchronously (upload -> transcribe -> extract),
     // we can jump to review if it was successful.
     setCurrentStep(3); 
@@ -82,8 +86,8 @@ export default function CallAutomationPage() {
         
         {currentStep === 3 && callId && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <TranscriptViewer callId={callId} />
-            <ExtractionReview callId={callId} onSyncSuccess={handleSyncSuccess} />
+            <TranscriptViewer callId={callId} initialData={transcriptData} />
+            <ExtractionReview callId={callId} onSyncSuccess={handleSyncSuccess} initialData={extractionData} />
           </div>
         )}
 

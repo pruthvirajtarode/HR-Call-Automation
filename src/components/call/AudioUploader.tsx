@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { UploadCloud, FileAudio, X, Loader2 } from "lucide-react";
 
-export function AudioUploader({ onUploadSuccess }: { onUploadSuccess: (callId: string) => void }) {
+export function AudioUploader({ onUploadSuccess }: { onUploadSuccess: (callId: string, transcript?: any, extraction?: any) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function AudioUploader({ onUploadSuccess }: { onUploadSuccess: (callId: s
         throw new Error(data.error || "Failed to process audio.");
       }
 
-      onUploadSuccess(data.callId);
+      onUploadSuccess(data.callId, data.transcript, data.extraction);
     } catch (err: any) {
       setError(err.message);
     } finally {

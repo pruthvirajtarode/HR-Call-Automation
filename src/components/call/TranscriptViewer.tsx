@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { Copy, Download, Loader2 } from "lucide-react";
 
-export function TranscriptViewer({ callId }: { callId: string }) {
-  const [transcript, setTranscript] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+export function TranscriptViewer({ callId, initialData }: { callId: string, initialData?: any }) {
+  const [transcript, setTranscript] = useState<string | null>(initialData?.content || null);
+  const [loading, setLoading] = useState(!initialData);
 
   useEffect(() => {
     async function fetchCall() {
@@ -21,10 +21,10 @@ export function TranscriptViewer({ callId }: { callId: string }) {
         setLoading(false);
       }
     }
-    if (callId) {
+    if (callId && !initialData) {
       fetchCall();
     }
-  }, [callId]);
+  }, [callId, initialData]);
 
   const copyToClipboard = () => {
     if (transcript) {
