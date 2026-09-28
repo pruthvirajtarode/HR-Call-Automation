@@ -16,10 +16,10 @@ export async function GET() {
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
     const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME || 'Sheet1';
 
-    // Fetch the data from the sheet to count rows
+    // Fetch the data from the sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `${sheetName}!A:A`,
+      range: `${sheetName}!A:Y`,
     });
 
     const rows = response.data.values || [];
