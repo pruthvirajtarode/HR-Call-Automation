@@ -40,7 +40,8 @@ export default function Dashboard() {
     totalCandidates: 0,
     hoursSaved: 0,
     avgSyncTime: "0s",
-    aiAccuracy: "0%"
+    aiAccuracy: "0%",
+    chartData: null as any
   });
 
   useEffect(() => {
@@ -55,6 +56,11 @@ export default function Dashboard() {
     }
     fetchMetrics();
   }, []);
+
+  const { chartData } = metrics;
+  const currentAreaData = chartData?.areaData || areaData;
+  const currentPieData = chartData?.pieData || pieData;
+  const currentBarData = chartData?.barData || barData;
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
@@ -122,7 +128,7 @@ export default function Dashboard() {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={areaData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={currentAreaData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCandidates" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3}/>
@@ -150,7 +156,7 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={pieData}
+                  data={currentPieData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -159,7 +165,7 @@ export default function Dashboard() {
                   dataKey="value"
                   stroke="none"
                 >
-                  {pieData.map((entry, index) => (
+                  {currentPieData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -175,7 +181,7 @@ export default function Dashboard() {
           <h3 className="text-lg font-bold text-slate-800 mb-6">Roles Processed this Month</h3>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barSize={40}>
+              <BarChart data={currentBarData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barSize={40}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />

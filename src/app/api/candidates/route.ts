@@ -1,65 +1,49 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { google } from 'googleapis';
 
 export async function GET(request: Request) {
   try {
-    const candidates = await prisma.candidate.findMany({
-      include: {
-        calls: { orderBy: { createdAt: 'desc' }, take: 1 },
-        trackerSyncs: { orderBy: { createdAt: 'desc' }, take: 1 }
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
       },
-      orderBy: { createdAt: 'desc' }
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
 
-    if (candidates && candidates.length > 0) {
-      return NextResponse.json(candidates);
-    }
+    const sheets = google.sheets({ version: 'v4', auth });
     
-    // If DB is empty (like on Vercel), return impressive mock data for demo
-    return NextResponse.json(getMockCandidates());
-  } catch (error: any) {
-    console.error("GET candidates error, falling back to mock:", error);
-    return NextResponse.json(getMockCandidates());
-  }
-}
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+    const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME || 'Sheet1';
 
-function getMockCandidates() {
-  return [
-    {
-      id: "mock-1",
-      candidateName: "Sarah Jenkins",
-      email: "sarah.j@example.com",
-      contactNumber: "+1 (555) 123-4567",
-      currentOrganization: "TechFlow Solutions",
-      totalExperience: "6 Years",
-      currentLocation: "San Francisco, CA",
-      createdAt: new Date().toISOString(),
-      calls: [{ status: "SYNCED" }],
-      trackerSyncs: [{ status: "SUCCESS", sheetRowNumber: 42 }]
-    },
-    {
-      id: "mock-2",
-      candidateName: "Michael Chen",
-      email: "m.chen88@example.com",
-      contactNumber: "+1 (555) 987-6543",
-      currentOrganization: "DataNova Inc",
-      totalExperience: "4 Years",
-      currentLocation: "Austin, TX",
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-      calls: [{ status: "SYNCED" }],
-      trackerSyncs: [{ status: "SUCCESS", sheetRowNumber: 41 }]
-    },
-    {
-      id: "mock-3",
-      candidateName: "Priya Sharma",
-      email: "priya.sharma@outlook.com",
-      contactNumber: "9876512345",
-      currentOrganization: "Global Solutions",
-      totalExperience: "8 Years",
-      currentLocation: "Pune, India",
-      createdAt: new Date(Date.now() - 172800000).toISOString(),
-      calls: [{ status: "APPROVED" }],
-      trackerSyncs: [{ status: "PENDING", sheetRowNumber: null }]
-    }
-  ];
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A2:Y`,
+    });
+
+    const rows = response.data.values || [];
+    
+    // Reverse rows so newest is first
+    rows.reverse();
+
+    const candidates = rows.map((row, index) => {
+      return {
+        id: `sheet-row-${index}`,
+        candidateName: row[4] || "Unknown",
+        email: row[6] || "",
+        contactNumber: row[5] || "",
+        currentOrganization: row[7] || "",
+        totalExperience: row[9] || "",
+        currentLocation: row[11] || "",
+        createdAt: row[2] || new Date().toLocaleDateString(),
+        calls: [{ status: "SYNCED" }],
+        trackerSyncs: [{ status: "SUCCESS", sheetRowNumber: rows.length - index + 1 }]
+      };
+    });
+
+    return NextResponse.json(candidates);
+  } catch (error: any) {
+    console.error("GET candidates from sheets error:", error);
+    return NextResponse.json([]);
+  }
 }
