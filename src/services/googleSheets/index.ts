@@ -45,42 +45,40 @@ export async function appendToGoogleSheet(params: SyncCandidateToSheetParams): P
 
     // Map extracted data to sheet columns based on expected order
     const row = [
-      params.candidateData.serial_number ?? nextSerialNumber.toString(),
-      params.candidateData.source ?? source,
-      params.candidateData.date ?? today,
-      params.candidateData.job_code ?? "",
-      params.candidateData.candidate_name ?? "",
-      params.candidateData.contact_number ?? "",
-      params.candidateData.email ?? "",
-      params.candidateData.current_organization ?? "",
-      params.candidateData.present_designation ?? "",
-      params.candidateData.total_experience ?? "",
-      params.candidateData.relevant_experience ?? "",
-      params.candidateData.current_location ?? "",
-      params.candidateData.preferred_location ?? "",
-      params.candidateData.notice_period ?? "",
-      params.candidateData.last_working_day ?? "",
-      params.candidateData.qualification ?? "",
-      params.candidateData.year_of_passing ?? "",
-      params.candidateData.date_of_birth ?? "",
-      params.candidateData.reason_for_job_change ?? "",
-      params.candidateData.linkedin ?? "",
-      params.candidateData.offers_in_hand ?? "",
-      params.candidateData.permanent_or_pf ?? "",
-      params.candidateData.communication ?? "",
-      params.candidateData.current_ctc ?? "",
-      params.candidateData.expected_ctc ?? "",
-      params.candidateData.communication ?? "",
-      params.candidateData.current_ctc ?? "",
-      params.candidateData.expected_ctc ?? "",
-      params.candidateData.job_interest ?? "",
-      params.candidateData.availability ?? "",
-      params.candidateData.joining_date ?? "",
-      params.candidateData.candidate_preference ?? "",
-      params.candidateData.recruiter_observation ?? "",
-      params.candidateData.candidate_questions ?? "",
-      params.candidateData.call_outcome ?? "",
-      params.candidateData.follow_up_required ?? "",
+      params.candidateData.serial_number ?? nextSerialNumber.toString(), // A (0)
+      params.candidateData.source ?? source, // B (1)
+      params.candidateData.date ?? today, // C (2)
+      params.candidateData.job_code ?? "", // D (3)
+      params.candidateData.candidate_name ?? "", // E (4)
+      params.candidateData.contact_number ?? "", // F (5)
+      params.candidateData.email ?? "", // G (6)
+      params.candidateData.current_organization ?? "", // H (7)
+      params.candidateData.present_designation ?? "", // I (8)
+      params.candidateData.total_experience ?? "", // J (9)
+      params.candidateData.relevant_experience ?? "", // K (10)
+      params.candidateData.current_location ?? "", // L (11)
+      params.candidateData.preferred_location ?? "", // M (12)
+      params.candidateData.notice_period ?? "", // N (13)
+      params.candidateData.last_working_day ?? "", // O (14)
+      params.candidateData.qualification ?? "", // P (15)
+      params.candidateData.year_of_passing ?? "", // Q (16)
+      params.candidateData.date_of_birth ?? "", // R (17)
+      params.candidateData.reason_for_job_change ?? "", // S (18)
+      params.candidateData.linkedin ?? "", // T (19)
+      params.candidateData.current_ctc ?? "", // U (20) - CTC
+      params.candidateData.expected_ctc ?? "", // V (21) - ECTC
+      params.candidateData.offers_in_hand ?? "", // W (22) - Offers in hand
+      // Additional data appended after the main columns
+      params.candidateData.permanent_or_pf ?? "", // X (23)
+      params.candidateData.communication ?? "", // Y (24)
+      params.candidateData.job_interest ?? "", // Z (25)
+      params.candidateData.availability ?? "", // AA (26)
+      params.candidateData.joining_date ?? "", // AB (27)
+      params.candidateData.candidate_preference ?? "", // AC (28)
+      params.candidateData.recruiter_observation ?? "", // AD (29)
+      params.candidateData.candidate_questions ?? "", // AE (30)
+      params.candidateData.call_outcome ?? "", // AF (31)
+      params.candidateData.follow_up_required ?? "", // AG (32)
     ];
 
     if (params.action === 'update' && params.updateRowNumber) {
