@@ -23,8 +23,15 @@ export async function GET() {
     });
 
     const rows = response.data.values || [];
-    const actualRows = rows.slice(1); // skip header
-    const totalCandidates = Math.max(0, actualRows.length);
+    // Filter out rows that are completely empty or represent the header
+    const actualRows = rows.filter(row => {
+      if (!row || row.length === 0) return false;
+      if (row[0] === 'Sl No' || row[1] === 'Source') return false; // Skip header
+      if (!row[0] && !row[1] && !row[4]) return false; // Skip empty rows
+      return true;
+    });
+
+    const totalCandidates = actualRows.length;
     
     // Calculate realistic dynamic metrics based on actual sheet volume
     const hoursSaved = totalCandidates > 0 ? Math.round(totalCandidates * 0.5) : 0; // Estimate: 30 mins saved per candidate
@@ -32,35 +39,61 @@ export async function GET() {
     const aiAccuracy = totalCandidates > 0 ? "98.4% (Demo Metric)" : "N/A";
 
     // Dynamic Chart: Source (Pie Chart) - Column B (index 1)
-    const sourceCount: Record<string, number> = { "AI Call Automation": 0, "LinkedIn": 0, "Naukri": 0, "Direct": 0 };
+    const sourceCount: Record<string, number> = {};
     actualRows.forEach(row => {
-      const src = row[1] || "Direct";
+      let src = row[1]?.trim() || "Direct";
+      if (src.toLowerCase() === 'ai call') src = 'AI Call Automation';
       sourceCount[src] = (sourceCount[src] || 0) + 1;
     });
 
-    const pieData = Object.entries(sourceCount).map(([name, value]) => ({ name, value })).filter(d => d.value > 0);
+    const pieData = Object.entries(sourceCount).map(([name, value]) => ({ name, value }));
 
     // Dynamic Chart: Roles (Bar Chart) - Column I (index 8)
     const roleCount: Record<string, number> = {};
     actualRows.forEach(row => {
-      let role = row[8] || "Unknown";
-      if (role.includes("Android")) role = "Engineering";
-      else if (role.includes("Product")) role = "Product";
-      else role = "Engineering"; // fallback
+      let role = row[8]?.trim() || "Unknown";
+      // Simplify long role names or categorize them
+      if (role.toLowerCase().includes("software") || role.toLowerCase().includes("developer")) role = "Engineering";
+      else if (role.toLowerCase().includes("product")) role = "Product";
+      else if (role.toLowerCase().includes("data") || role.toLowerCase().includes("analyst")) role = "Data";
+      else if (role.length > 15) role = role.substring(0, 15) + '...'; // truncate long unknown roles
+      
       roleCount[role] = (roleCount[role] || 0) + 1;
     });
 
     const barData = Object.entries(roleCount).map(([name, count]) => ({ name, count }));
 
-    // Dynamic Chart: Timeline (Area Chart)
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const areaData = days.map((day, i) => {
-      const base = i < 4 ? 0 : 0;
-      return {
-        name: day,
-        candidates: i === days.length - 1 ? totalCandidates : base
-      };
+    // Dynamic Chart: Timeline (Area Chart) - Column C (index 2)
+    const dateCount: Record<string, number> = {};
+    actualRows.forEach(row => {
+      let dateStr = row[2]?.trim();
+      if (!dateStr) return;
+      
+      // Attempt to standardize date parsing. e.g. "28 Sept 2026"
+      try {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          // format as "DD MMM"
+          const formatted = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+          dateCount[formatted] = (dateCount[formatted] || 0) + 1;
+        } else {
+          // fallback if parsing fails
+          dateCount[dateStr.substring(0, 6)] = (dateCount[dateStr.substring(0, 6)] || 0) + 1;
+        }
+      } catch (e) {
+        dateCount[dateStr.substring(0, 6)] = (dateCount[dateStr.substring(0, 6)] || 0) + 1;
+      }
     });
+
+    let areaData = Object.entries(dateCount)
+      .map(([name, candidates]) => ({ name, candidates }));
+      
+    // If we don't have enough data points, pad it for a better looking chart
+    if (areaData.length === 0) {
+      areaData = [{ name: 'Today', candidates: 0 }];
+    } else if (areaData.length === 1) {
+      areaData.unshift({ name: 'Prev', candidates: 0 });
+    }
 
     return NextResponse.json({
       totalCandidates,
