@@ -12,8 +12,10 @@ export async function transcribeAudio(filePath: string, mimeType: string = "audi
     console.warn("No GEMINI_API_KEY provided. Using mock transcription.");
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 2000));
-    return `Recruiter: Hello sir, good morning. Prakash this side from ABC consultancy. Disturb toh nahi kiya?
-Candidate: No no, it's okay.
+    return `Recruiter: Hello Rahul sir, good morning. Prakash this side from ABC consultancy. Am I speaking with Rahul Sharma?
+Candidate: Yes, speaking.
+Recruiter: Sir, can you confirm your email and number for our records? Is it rahul.s@gmail.com and 9876543210?
+Candidate: Yes, that's correct.
 Recruiter: Actually sir, aapka profile dekha tha. Ek opening hai Senior Software Engineer ki. Are you looking for a change?
 Candidate: Yes, actually I am.
 Recruiter: Achha okay. Currently kaha work kar rahe ho?
@@ -81,7 +83,9 @@ export async function extractCandidateData(transcript: string) {
     console.warn("No GEMINI_API_KEY provided. Using mock extraction.");
     await new Promise(resolve => setTimeout(resolve, 1500));
     return {
-      candidate_name: { value: null, confidence: 0, source_text: null, status: "missing" }, // Name not clearly stated by candidate in demo
+      candidate_name: { value: "Rahul Sharma", confidence: 0.98, source_text: "Am I speaking with Rahul Sharma? ... Yes, speaking.", speaker: "candidate", status: "extracted" },
+      contact_number: { value: "9876543210", confidence: 0.98, source_text: "9876543210? ... Yes, that's correct.", speaker: "candidate", status: "extracted" },
+      email: { value: "rahul.s@gmail.com", confidence: 0.98, source_text: "rahul.s@gmail.com ... Yes, that's correct.", speaker: "candidate", status: "extracted" },
       current_organization: { value: "Infosys", confidence: 0.98, source_text: "Infosys.", speaker: "candidate", status: "extracted" },
       present_designation: { value: "Senior Software Engineer", confidence: 0.98, source_text: "Senior Software Engineer.", speaker: "candidate", status: "extracted" },
       total_experience: { value: "6 years", confidence: 0.98, source_text: "Six years overall", speaker: "candidate", status: "extracted" },
