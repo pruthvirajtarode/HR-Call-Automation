@@ -27,9 +27,9 @@ export async function GET() {
     const totalCandidates = Math.max(0, actualRows.length);
     
     // Calculate realistic dynamic metrics based on actual sheet volume
-    const hoursSaved = Math.round(totalCandidates * 0.5); // Assume 30 mins saved per candidate
-    const avgSyncTime = "3.2s"; 
-    const aiAccuracy = "98.4%";
+    const hoursSaved = totalCandidates > 0 ? Math.round(totalCandidates * 0.5) : 0; // Estimate: 30 mins saved per candidate
+    const avgSyncTime = totalCandidates > 0 ? "3.2s (Estimate)" : "N/A"; 
+    const aiAccuracy = totalCandidates > 0 ? "98.4% (Demo Metric)" : "N/A";
 
     // Dynamic Chart: Source (Pie Chart) - Column B (index 1)
     const sourceCount: Record<string, number> = { "AI Call Automation": 0, "LinkedIn": 0, "Naukri": 0, "Direct": 0 };
@@ -37,9 +37,6 @@ export async function GET() {
       const src = row[1] || "Direct";
       sourceCount[src] = (sourceCount[src] || 0) + 1;
     });
-    // Fill remaining to look realistic if empty
-    if (sourceCount["LinkedIn"] === 0) sourceCount["LinkedIn"] = Math.floor(totalCandidates * 0.3) + 1;
-    if (sourceCount["Naukri"] === 0) sourceCount["Naukri"] = Math.floor(totalCandidates * 0.2) + 1;
 
     const pieData = Object.entries(sourceCount).map(([name, value]) => ({ name, value })).filter(d => d.value > 0);
 
@@ -52,19 +49,16 @@ export async function GET() {
       else role = "Engineering"; // fallback
       roleCount[role] = (roleCount[role] || 0) + 1;
     });
-    if (!roleCount["Sales"]) roleCount["Sales"] = 2;
-    if (!roleCount["Design"]) roleCount["Design"] = 1;
 
     const barData = Object.entries(roleCount).map(([name, count]) => ({ name, count }));
 
     // Dynamic Chart: Timeline (Area Chart)
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const areaData = days.map((day, i) => {
-      // Create a slightly growing trend peaking at the end
-      const base = i < 4 ? 2 : 5;
+      const base = i < 4 ? 0 : 0;
       return {
         name: day,
-        candidates: i === days.length - 1 ? totalCandidates : base + Math.floor(Math.random() * 3)
+        candidates: i === days.length - 1 ? totalCandidates : base
       };
     });
 

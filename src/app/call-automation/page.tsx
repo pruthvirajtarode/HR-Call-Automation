@@ -21,6 +21,7 @@ export default function CallAutomationPage() {
   const [transcriptData, setTranscriptData] = useState<any>(null);
   const [extractionData, setExtractionData] = useState<any>(null);
   const [status, setStatus] = useState<CandidateProcessingStatus>("UPLOAD_PENDING");
+  const [highlightText, setHighlightText] = useState<string | null>(null);
 
   const handleUploadSuccess = (newCallId: string, transcript?: any, extraction?: any) => {
     setCallId(newCallId);
@@ -86,8 +87,8 @@ export default function CallAutomationPage() {
         
         {currentStep === 3 && callId && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <TranscriptViewer callId={callId} initialData={transcriptData} />
-            <ExtractionReview callId={callId} onSyncSuccess={handleSyncSuccess} initialData={extractionData} />
+            <TranscriptViewer callId={callId} initialData={transcriptData} highlightText={highlightText} />
+            <ExtractionReview callId={callId} onSyncSuccess={handleSyncSuccess} initialData={extractionData} onHighlightText={setHighlightText} />
           </div>
         )}
 

@@ -5,7 +5,7 @@ import { appendToGoogleSheet } from '@/services/googleSheets';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { callId, candidateData } = body;
+    const { callId, candidateData, action, updateRowNumber } = body;
 
     if (!candidateData) {
       return NextResponse.json({ error: 'Missing candidate data' }, { status: 400 });
@@ -66,7 +66,11 @@ export async function POST(request: Request) {
         flattenedData[key] = candidateData[key]?.value ?? null;
       });
 
-      const syncResult = await appendToGoogleSheet({ candidateData: flattenedData });
+      const syncResult = await appendToGoogleSheet({ 
+        candidateData: flattenedData,
+        action,
+        updateRowNumber
+      });
       sheetRowNumber = syncResult.rowNumber;
       syncStatus = 'SUCCESS';
     } catch (err: any) {

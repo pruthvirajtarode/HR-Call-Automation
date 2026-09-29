@@ -2,7 +2,9 @@ export interface ExtractedField<T> {
   value: T | null;
   confidence: number;
   source_text: string | null;
-  status: "extracted" | "missing" | "uncertain" | "manually_corrected";
+  source_timestamp?: string | null;
+  speaker?: "candidate" | "recruiter" | "unknown" | null;
+  status: "extracted" | "missing" | "uncertain" | "conflicting" | "manually_corrected";
 }
 
 export interface CandidateExtractionSchema {
@@ -31,6 +33,14 @@ export interface CandidateExtractionSchema {
   communication: ExtractedField<string>;
   current_ctc: ExtractedField<string>;
   expected_ctc: ExtractedField<string>;
+  job_interest?: ExtractedField<string>;
+  availability?: ExtractedField<string>;
+  joining_date?: ExtractedField<string>;
+  candidate_preference?: ExtractedField<string>;
+  recruiter_observation?: ExtractedField<string>;
+  candidate_questions?: ExtractedField<string>;
+  call_outcome?: ExtractedField<string>;
+  follow_up_required?: ExtractedField<string | boolean>;
 }
 
 export type CandidateProcessingStatus = 

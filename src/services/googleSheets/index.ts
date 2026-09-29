@@ -2,6 +2,8 @@ import { google } from "googleapis";
 
 export interface SyncCandidateToSheetParams {
   candidateData: Record<string, any>;
+  action?: 'create' | 'update';
+  updateRowNumber?: number;
 }
 
 export async function appendToGoogleSheet(params: SyncCandidateToSheetParams): Promise<{ rowNumber: number }> {
@@ -68,7 +70,28 @@ export async function appendToGoogleSheet(params: SyncCandidateToSheetParams): P
       params.candidateData.communication ?? "",
       params.candidateData.current_ctc ?? "",
       params.candidateData.expected_ctc ?? "",
+      params.candidateData.communication ?? "",
+      params.candidateData.current_ctc ?? "",
+      params.candidateData.expected_ctc ?? "",
+      params.candidateData.job_interest ?? "",
+      params.candidateData.availability ?? "",
+      params.candidateData.joining_date ?? "",
+      params.candidateData.candidate_preference ?? "",
+      params.candidateData.recruiter_observation ?? "",
+      params.candidateData.candidate_questions ?? "",
+      params.candidateData.call_outcome ?? "",
+      params.candidateData.follow_up_required ?? "",
     ];
+
+    if (params.action === 'update' && params.updateRowNumber) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${sheetName}!A${params.updateRowNumber}:AI${params.updateRowNumber}`,
+        valueInputOption: "USER_ENTERED",
+        requestBody: { values: [row] },
+      });
+      return { rowNumber: params.updateRowNumber };
+    }
 
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId,
@@ -93,5 +116,50 @@ export async function appendToGoogleSheet(params: SyncCandidateToSheetParams): P
   } catch (error) {
     console.error("Error appending to Google Sheet:", error);
     throw new Error("Failed to sync to Google Sheet.");
+  }
+}
+
+export async function checkDuplicateInGoogleSheet(email: string, phone: string, name: string): Promise<{ isDuplicate: boolean, rowNumber?: number, matchType?: string }> {
+  try {
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+    const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME || "Candidates";
+    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+
+    if (!spreadsheetId || !clientEmail || !privateKey) return { isDuplicate: false };
+
+    const auth = new google.auth.GoogleAuth({
+      credentials: { client_email: clientEmail, private_key: privateKey },
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+
+    const sheets = google.sheets({ version: "v4", auth });
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A:Y`, // Check up to Y, where Email is G (6), Phone is F (5), Name is E (4)
+    });
+
+    const rows = response.data.values || [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const rEmail = r[6];
+      const rPhone = r[5];
+      const rName = r[4];
+      
+      if (email && rEmail && rEmail.toLowerCase() === email.toLowerCase()) {
+        return { isDuplicate: true, rowNumber: i + 1, matchType: 'email' };
+      }
+      if (phone && rPhone && rPhone.replace(/\D/g, '') === phone.replace(/\D/g, '')) {
+        return { isDuplicate: true, rowNumber: i + 1, matchType: 'phone' };
+      }
+      if (name && rName && rName.toLowerCase() === name.toLowerCase()) {
+         return { isDuplicate: true, rowNumber: i + 1, matchType: 'name' };
+      }
+    }
+
+    return { isDuplicate: false };
+  } catch (error) {
+    console.error("Duplicate check failed:", error);
+    return { isDuplicate: false };
   }
 }

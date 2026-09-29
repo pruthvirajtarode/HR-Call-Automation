@@ -6,11 +6,12 @@ import { CandidateExtractionSchema } from "@/types/candidate";
 
 type FlattenedData = Record<string, any>;
 
-export function ExtractionReview({ callId, onSyncSuccess, initialData }: { callId: string, onSyncSuccess: () => void, initialData?: any }) {
+export function ExtractionReview({ callId, onSyncSuccess, initialData, onHighlightText }: { callId: string, onSyncSuccess: () => void, initialData?: any, onHighlightText?: (text: string) => void }) {
   const [data, setData] = useState<FlattenedData | null>(initialData ? JSON.parse(initialData.extractedData) : null);
   const [loading, setLoading] = useState(!initialData);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<{ isDuplicate: boolean, rowNumber?: number, matchType?: string } | null>(null);
 
   useEffect(() => {
     async function fetchCall() {
@@ -44,14 +45,45 @@ export function ExtractionReview({ callId, onSyncSuccess, initialData }: { callI
     });
   };
 
-  const handleApprove = async () => {
+  const handleApprove = async (actionOverride?: 'create' | 'update', updateRowNumber?: number) => {
     setSaving(true);
     setError(null);
+
+    // If no action override is provided, check for duplicates first
+    if (!actionOverride) {
+      try {
+        const checkRes = await fetch(`/api/candidates/check-duplicate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: data?.email?.value,
+            phone: data?.contact_number?.value,
+            name: data?.candidate_name?.value,
+          })
+        });
+        const checkResult = await checkRes.json();
+        if (checkResult.isDuplicate) {
+          setDuplicateWarning(checkResult);
+          setSaving(false);
+          return;
+        }
+      } catch (err) {
+        console.warn("Duplicate check failed, proceeding to sync.", err);
+      }
+    }
+
+    setDuplicateWarning(null);
+
     try {
       const res = await fetch(`/api/candidates/sync`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ callId, candidateData: data })
+        body: JSON.stringify({ 
+          callId, 
+          candidateData: data,
+          action: actionOverride || 'create',
+          updateRowNumber
+        })
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed to sync");
@@ -88,7 +120,7 @@ export function ExtractionReview({ callId, onSyncSuccess, initialData }: { callI
       
       <div className="flex-1 p-6 overflow-y-auto space-y-5">
         {Object.entries(data).map(([key, field]) => {
-          const typedField = field as { value: string | null; confidence: number; source_text: string | null; status: string };
+          const typedField = field as { value: string | null; confidence: number; source_text: string | null; status: string; speaker?: string };
           
           return (
             <div key={key} className="flex flex-col gap-1.5">
@@ -106,6 +138,11 @@ export function ExtractionReview({ callId, onSyncSuccess, initialData }: { callI
                     <AlertCircle className="w-3 h-3" /> Uncertain
                   </span>
                 )}
+                {typedField.status === "conflicting" && (
+                  <span className="text-xs text-orange-600 font-medium flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Conflicting
+                  </span>
+                )}
                 {typedField.status === "manually_corrected" && (
                   <span className="text-xs text-indigo-500 font-medium">Edited</span>
                 )}
@@ -120,13 +157,38 @@ export function ExtractionReview({ callId, onSyncSuccess, initialData }: { callI
                     ? 'border-red-200 bg-red-50/30' 
                     : typedField.status === 'uncertain'
                     ? 'border-amber-200 bg-amber-50/30'
+                    : typedField.status === 'conflicting'
+                    ? 'border-orange-300 bg-orange-50/50'
                     : 'border-slate-200 focus:border-indigo-500'
                 }`}
               />
               {typedField.source_text && (
-                <div className="flex items-start gap-1.5 mt-1 text-xs text-slate-500 bg-slate-50 p-2 rounded border border-slate-100">
-                  <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                  <span className="italic">"{typedField.source_text}"</span>
+                <div className="flex flex-col gap-2 mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Evidence</span>
+                    {typedField.confidence > 0 && (
+                      <span className={`text-xs font-medium ${typedField.confidence > 0.9 ? 'text-green-600' : 'text-amber-600'}`}>
+                        {Math.round(typedField.confidence * 100)}% confidence
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-start gap-1.5 text-sm text-slate-700">
+                    <Info className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                    <span className="italic flex-1">"{typedField.source_text}"</span>
+                  </div>
+                  {typedField.speaker && (
+                    <div className="text-xs text-slate-500 mt-1">
+                      Speaker: <span className="font-medium text-slate-700 capitalize">{typedField.speaker}</span>
+                    </div>
+                  )}
+                  {onHighlightText && (
+                    <button 
+                      onClick={() => onHighlightText(typedField.source_text!)}
+                      className="text-xs text-indigo-600 font-medium self-start hover:text-indigo-800 transition-colors mt-1"
+                    >
+                      [View in Transcript]
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -140,21 +202,57 @@ export function ExtractionReview({ callId, onSyncSuccess, initialData }: { callI
             {error}
           </div>
         )}
-        <div className="flex justify-end gap-3">
-          <button 
-            className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
-          >
-            Save Draft
-          </button>
-          <button
-            onClick={handleApprove}
-            disabled={saving}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-70 flex items-center gap-2"
-          >
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            Approve & Sync to Google Sheet
-          </button>
-        </div>
+        
+        {duplicateWarning ? (
+          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h4 className="font-semibold text-amber-900 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Possible existing candidate found
+            </h4>
+            <p className="text-sm text-amber-700 mt-1 mb-3">
+              We found a matching candidate in the Google Sheet based on their {duplicateWarning.matchType}.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleApprove('update', duplicateWarning.rowNumber)}
+                disabled={saving}
+                className="px-3 py-1.5 bg-amber-600 text-white rounded text-sm font-medium hover:bg-amber-700 transition-colors"
+              >
+                Update Existing (Row {duplicateWarning.rowNumber})
+              </button>
+              <button
+                onClick={() => handleApprove('create')}
+                disabled={saving}
+                className="px-3 py-1.5 border border-amber-300 text-amber-800 rounded text-sm font-medium hover:bg-amber-100 transition-colors"
+              >
+                Create New Record
+              </button>
+              <button
+                onClick={() => setDuplicateWarning(null)}
+                disabled={saving}
+                className="px-3 py-1.5 text-slate-600 hover:text-slate-800 text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end gap-3">
+            <button 
+              className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+            >
+              Save Draft
+            </button>
+            <button
+              onClick={() => handleApprove()}
+              disabled={saving}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-70 flex items-center gap-2"
+            >
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Approve & Sync to Google Sheet
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
