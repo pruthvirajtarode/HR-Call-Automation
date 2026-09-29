@@ -9,8 +9,21 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "HR Call Automation",
-  description: "Automate your recruitment call processing",
+  title: "ScreeningBench AI | HR Call Automation",
+  description: "Automate your recruitment call processing, transcription, and ATS syncing with advanced AI.",
+  keywords: "HR, Recruitment, Call Automation, AI, Screening, Applicant Tracking",
+  authors: [{ name: "ScreeningBench AI" }],
+  openGraph: {
+    title: "ScreeningBench AI",
+    description: "AI-driven HR call automation and screening platform.",
+    type: "website",
+  }
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
